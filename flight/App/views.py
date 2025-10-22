@@ -5,13 +5,17 @@ from rest_framework.response import Response
 from rest_framework import status, generics
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Flight, Booking, CustomUser
-from .serializers import UserSerializer, FlightSerializer, BookingSerializer, RegisterSerializer
-from .serializers import CustomUserSerializer
-
+from .serializers import (
+    UserSerializer,
+    FlightSerializer,
+    BookingSerializer,
+    RegisterSerializer,
+    CustomUserSerializer
+)
 
 @api_view(['GET'])
 def search_flights(request):
@@ -21,8 +25,8 @@ def search_flights(request):
     serializer = FlightSerializer(flights, many=True)
     return Response(serializer.data)
 
-
 @api_view(['GET', 'POST'])
+@permission_classes([IsAdminUser])
 def flight_list(request):
     if request.method == 'GET':
         flights = Flight.objects.all()
@@ -37,6 +41,7 @@ def flight_list(request):
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([IsAdminUser])
 def flight_detail(request, pk):
     try:
         flight = Flight.objects.get(pk=pk)
@@ -58,41 +63,8 @@ def flight_detail(request, pk):
 
 
 
-@api_view(['GET', 'POST'])
-def booking_list(request):
-    if request.method == 'GET':
-        bookings = Booking.objects.all()
-        serializer = BookingSerializer(bookings, many=True)
-        return Response(serializer.data)
-    elif request.method == 'POST':
-        serializer = BookingSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-@api_view(['GET', 'PUT', 'DELETE'])
-def booking_detail(request, pk):
-    try:
-        booking = Booking.objects.get(pk=pk)
-    except Booking.DoesNotExist:
-        return Response({'error': 'Booking not found'}, status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == 'GET':
-        serializer = BookingSerializer(booking)
-        return Response(serializer.data)
-    elif request.method == 'PUT':
-        serializer = BookingSerializer(booking, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    elif request.method == 'DELETE':
-        booking.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
+# Create booking (user)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_booking(request):
@@ -118,6 +90,18 @@ def user_bookings(request):
     return Response(serializer.data)
 
 
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def cancel_booking(request, pk):
+    try:
+        booking = Booking.objects.get(pk=pk, user=request.user)
+    except Booking.DoesNotExist:
+        return Response({'error': 'Booking not found or not yours'}, status=status.HTTP_404_NOT_FOUND)
+    booking.delete()
+    return Response({'message': 'Booking cancelled successfully'}, status=status.HTTP_204_NO_CONTENT)
+
+
+
 
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
@@ -125,7 +109,6 @@ def admin_user_list(request):
     users = CustomUser.objects.all()
     serializer = UserSerializer(users, many=True)
     return Response(serializer.data)
-
 
 @api_view(['GET', 'PUT', 'DELETE'])
 @permission_classes([IsAdminUser])
@@ -150,6 +133,7 @@ def admin_user_detail(request, pk):
 
 
 
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
@@ -157,11 +141,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['username'] = user.username
         return token
 
-
 class LoginView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
-
-
 
 class RegisterView(generics.CreateAPIView):
     queryset = CustomUser.objects.all()
@@ -172,8 +153,6 @@ class RegisterView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         return Response({"detail": "Registration successful!"}, status=status.HTTP_201_CREATED)
-
-
 
 class CustomLoginView(APIView):
     def post(self, request):
@@ -200,7 +179,6 @@ def get_pending_users(request):
     serializer = CustomUserSerializer(users, many=True)
     return Response(serializer.data)
 
-
 @api_view(['POST'])
 @permission_classes([IsAdminUser])
 def approve_user(request, user_id):
@@ -212,7 +190,6 @@ def approve_user(request, user_id):
         return Response({"message": f"{user.username} approved successfully"})
     except CustomUser.DoesNotExist:
         return Response({"error": "User not found"}, status=404)
-
 
 @api_view(['POST'])
 @permission_classes([IsAdminUser])
