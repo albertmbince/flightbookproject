@@ -1,47 +1,107 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom";
-import "bootstrap/dist/css/bootstrap.min.css";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 
-import { TripsProvider } from "./context/TripsContext";
-import { UserProvider } from "./context/UserContext";
-
+// Components
 import NavBar from "./components/Navbar";
+import PrivateRoute from "./components/PrivateRoute";
+
+// Pages
 import Home from "./pages/Home";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import Dashboard from "./pages/Dashboard";
 import Flights from "./pages/Flights";
+import FlightSearch from "./components/FlightSearch";
 import MyTrips from "./pages/MyTrips";
+import AdminDashboard from "./components/AdminDashboard";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
-import AdminDashboard from "./components/AdminDashboard";
+import ManageFlights from "./pages/ManageFlights";
 
-// Layout wrapper for pages that require Navbar
-const WithNavbar = () => (
-  <>
-    <NavBar />
-    <Outlet />
-  </>
-);
+
+function AppContent() {
+  const location = useLocation();
+
+
+  const hideNavbarRoutes = ["/login", "/register"];
+  const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname);
+
+  return (
+    <>
+      {!shouldHideNavbar && <NavBar />}
+
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        {/* User Protected Routes */}
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute>
+              <Dashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/flights"
+          element={
+            <PrivateRoute>
+              <Flights />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/my-trips"
+          element={
+            <PrivateRoute>
+              <MyTrips />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/search"
+          element={
+            <PrivateRoute>
+              <FlightSearch />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Admin Protected Routes */}
+        <Route
+          path="/admin-dashboard"
+          element={
+            <PrivateRoute adminOnly={true}>
+              <AdminDashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/manage-flights"
+          element={
+            <PrivateRoute adminOnly={true}>
+              <ManageFlights />
+            </PrivateRoute>
+          }
+        />
+
+        {/* Fallback Route */}
+        <Route path="*" element={<Home />} />
+      </Routes>
+    </>
+  );
+}
 
 function App() {
   return (
-    <UserProvider>
-      <TripsProvider>
-        <Router>
-          <Routes>
-            {/* Pages without Navbar */}
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-
-            {/* Pages with Navbar */}
-            <Route element={<WithNavbar />}>
-              <Route path="/flights" element={<Flights />} />
-              <Route path="/my-trips" element={<MyTrips />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-            </Route>
-          </Routes>
-        </Router>
-      </TripsProvider>
-    </UserProvider>
+    <Router>
+      <AppContent />
+    </Router>
   );
 }
 

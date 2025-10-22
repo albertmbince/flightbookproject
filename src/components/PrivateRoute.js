@@ -1,11 +1,16 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Navigate } from "react-router-dom";
+import { UserContext } from "../context/UserContext";
 
-const PrivateRoute = ({ children }) => {
-  const isAuthenticated = !!localStorage.getItem("access_token");
+const PrivateRoute = ({ children, adminOnly = false }) => {
+  const { user } = useContext(UserContext);
 
-  if (!isAuthenticated) {
+  if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (adminOnly && !user.is_staff) {
+    return <Navigate to="/" replace />;
   }
 
   return children;

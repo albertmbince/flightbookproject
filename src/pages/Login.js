@@ -20,7 +20,6 @@ function Login() {
     setError("");
 
     try {
-
       const response = await api.post("auth/login/", {
         username: credentials.username,
         password: credentials.password,
@@ -36,10 +35,10 @@ function Login() {
       loginUser(user);
 
 
-      if (user.is_superuser || user.role === "admin") {
-        navigate("/admin");
+      if (user.is_superuser || user.role === "admin" || user.is_staff) {
+        navigate("/admin-dashboard");
       } else {
-        navigate("/flights");
+        navigate("/dashboard");
       }
     } catch (err) {
       console.error(err.response?.data);
@@ -47,7 +46,6 @@ function Login() {
       if (err.response?.data?.detail) {
         setError(err.response.data.detail);
       } else if (err.response?.data) {
-
         const messages = Object.values(err.response.data).flat().join(" ");
         setError(messages);
       } else {

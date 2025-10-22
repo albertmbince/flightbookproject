@@ -10,14 +10,19 @@ function FlightCard({ flight, onBook }) {
       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "")}
     >
       <Card.Body>
-        <Card.Title className="text-primary">{flight.flightNumber}</Card.Title>
+        <Card.Title className="text-primary">{flight.flight_number}</Card.Title>
         <Card.Text>
-          <strong>From:</strong> {flight.from} <br />
-          <strong>To:</strong> {flight.to} <br />
-          <strong>Date:</strong> {flight.date} <br />
+          <strong>From:</strong> {flight.origin} <br />
+          <strong>To:</strong> {flight.destination} <br />
+          <strong>Date:</strong> {new Date(flight.departure_time).toLocaleString()} <br />
           <strong>Price:</strong> ₹{flight.price} <br />
           <strong>Status:</strong>{" "}
-          <span style={{ color: flight.status === "On-time" ? "green" : "red", fontWeight: "bold" }}>
+          <span
+            style={{
+              color: flight.status === "On-time" ? "green" : "red",
+              fontWeight: "bold",
+            }}
+          >
             {flight.status}
           </span>
         </Card.Text>

@@ -1,71 +1,73 @@
-import React, { useContext, useEffect, useState } from "react";
-import { Container, Row, Col, Card, Button, Spinner, Alert } from "react-bootstrap";
-import api from "../api/axiosConfig";
-import { TripsContext } from "../context/TripsContext";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { Button, Alert, Card, Row, Col } from "react-bootstrap";
 
 function Flights() {
-  const { addTrip } = useContext(TripsContext);
   const [flights, setFlights] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [alert, setAlert] = useState({ type: "", message: "" });
 
-  // Fetch flights from backend
-  const fetchFlights = async () => {
-    try {
-      const res = await api.get("flights/");
-      setFlights(res.data);
-      setLoading(false);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load flights.");
-      setLoading(false);
-    }
-  };
+  const token = localStorage.getItem("access_token");
 
   useEffect(() => {
     fetchFlights();
   }, []);
 
-  if (loading)
-    return (
-      <div className="text-center mt-5">
-        <Spinner animation="border" /> <p>Loading flights...</p>
-      </div>
-    );
+  const fetchFlights = async () => {
+    try {
+      const res = await axios.get("/api/flights/", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setFlights(res.data);
+    } catch (err) {
+      console.log(err.response || err);
+    }
+  };
 
-  if (error)
-    return (
-      <Container className="mt-5">
-        <Alert variant="danger">{error}</Alert>
-      </Container>
-    );
+  const handleBook = async (flightId) => {
+    try {
+      const res = await axios.post(
+        "/api/bookings/create/",
+        { flight: flightId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setAlert({ type: "success", message: "Flight booked successfully!" });
+    } catch (err) {
+      setAlert({
+        type: "danger",
+        message:
+          err.response?.data?.error ||
+          "Error booking flight. Maybe already booked.",
+      });
+    }
+  };
 
   return (
-    <Container className="mt-4">
-      <h2 className="text-center mb-4 text-primary">Available Flights</h2>
-      <Row className="g-4">
-        {flights.map((flight) => (
-          <Col md={6} lg={4} key={flight.id}>
-            <Card className="shadow-sm">
+    <div className="container mt-4">
+      <h2>Available Flights</h2>
+      {alert.message && <Alert variant={alert.type}>{alert.message}</Alert>}
+
+      <Row>
+        {flights.map((f) => (
+          <Col md={4} key={f.id} className="mb-3">
+            <Card>
               <Card.Body>
-                <Card.Title>{flight.flight_number}</Card.Title>
+                <Card.Title>
+                  {f.origin} → {f.destination}
+                </Card.Title>
                 <Card.Text>
-                  From: {flight.origin} <br />
-                  To: {flight.destination} <br />
-                  Departure: {new Date(flight.departure_time).toLocaleString()} <br />
-                  Arrival: {new Date(flight.arrival_time).toLocaleString()} <br />
-                  Price: ₹{flight.price} <br />
-                  Status: {flight.status}
+                  Departure: {f.departure} <br />
+                  Arrival: {f.arrival} <br />
+                  Price: ${f.price}
                 </Card.Text>
-                <Button variant="success" onClick={() => addTrip(flight)}>
-                  Book Flight
+                <Button onClick={() => handleBook(f.id)} variant="primary">
+                  Book
                 </Button>
               </Card.Body>
             </Card>
           </Col>
         ))}
       </Row>
-    </Container>
+    </div>
   );
 }
 

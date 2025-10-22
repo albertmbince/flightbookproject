@@ -16,13 +16,11 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor to handle 401 errors (token expiration)
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // If 401 and not already retried
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 

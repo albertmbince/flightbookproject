@@ -7,15 +7,14 @@ function AdminDashboard() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
 
-
   const fetchUsers = async () => {
     try {
-      const res = await api.get("/api/users/");
+      const res = await api.get("/users/");
       setUsers(res.data);
       setLoading(false);
     } catch (error) {
       console.error(error);
-      setMessage("Failed to load users");
+      setMessage("Failed to load users.");
       setLoading(false);
     }
   };
@@ -26,21 +25,21 @@ function AdminDashboard() {
 
   const handleApprove = async (id) => {
     try {
-      const res = await api.post(`/api/users/${id}/approve/`);
+      const res = await api.post(`/users/${id}/approve/`);
       setMessage(res.data.message);
       fetchUsers();
     } catch (error) {
-      setMessage("Error approving user");
+      setMessage("Error approving user.");
     }
   };
 
   const handleReject = async (id) => {
     try {
-      const res = await api.post(`/api/users/${id}/reject/`);
+      const res = await api.post(`/users/${id}/reject/`);
       setMessage(res.data.message);
       fetchUsers();
     } catch (error) {
-      setMessage("Error rejecting user");
+      setMessage("Error rejecting user.");
     }
   };
 
@@ -53,7 +52,7 @@ function AdminDashboard() {
 
   return (
     <Container className="mt-4">
-      <h2 className="text-center mb-4 text-primary">Admin Dashboard</h2>
+      <h2 className="text-center mb-4 text-danger">Admin Dashboard</h2>
 
       {message && <Alert variant="info">{message}</Alert>}
 

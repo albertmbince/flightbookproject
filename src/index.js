@@ -4,11 +4,12 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import "bootstrap/dist/css/bootstrap.min.css";
 import "./styles/custom.css";
 
-
 import axios from "axios";
+import { UserProvider } from "./context/UserContext";
+import { TripsProvider } from "./context/TripsContext";
+
 
 axios.defaults.baseURL = "http://127.0.0.1:8000/api";
 const token = localStorage.getItem("access_token");
@@ -19,11 +20,12 @@ if (token) {
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <UserProvider>
+      <TripsProvider>
+        <App />
+      </TripsProvider>
+    </UserProvider>
   </React.StrictMode>
 );
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
